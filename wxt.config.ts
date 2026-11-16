@@ -9,6 +9,14 @@ export default defineConfig({
     // scripting: reads the playback position of a YouTube video in that tab.
     // contextMenus: adds "Show QR code for this page / link" to the right-click menu.
     permissions: ['activeTab', 'scripting', 'contextMenus'],
+    // Opens the popup from the keyboard. Users can change the keys in
+    // chrome://extensions/shortcuts or Firefox's "Manage Extension Shortcuts".
+    commands: {
+      _execute_action: {
+        suggested_key: { default: 'Alt+Shift+Q' },
+        description: 'Show the QR code for this page',
+      },
+    },
     // End-to-end tests cannot click the real toolbar button, which is what
     // grants `activeTab`. The test-only build (`--mode e2e`) is therefore
     // allowed to read every page. Release builds never get this.
