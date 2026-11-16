@@ -23,7 +23,7 @@ export default tseslint.config(
   },
   {
     // Tooling and end-to-end tests: run in Node.
-    files: ['*.config.{js,ts}', 'e2e/**/*.ts'],
+    files: ['*.config.{js,ts}', 'e2e/**/*.ts', 'scripts/**/*.mjs'],
     languageOptions: { globals: globals.node },
   },
   prettier,
