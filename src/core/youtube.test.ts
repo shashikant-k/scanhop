@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
-import { buildYouTubeUrl, parseTimestamp, parseYouTube } from './youtube';
+import { buildYouTubeUrl, formatTimestamp, parseTimestamp, parseYouTube } from './youtube';
 
 const ID = 'dQw4w9WgXcQ';
 const LIST = 'PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf';
@@ -26,6 +26,22 @@ describe('parseTimestamp', () => {
 
   it.each(['', 'abc', '1x', '-5', '1.5', 's', null, undefined])('rejects %j', (input) => {
     expect(parseTimestamp(input)).toBeNull();
+  });
+});
+
+describe('formatTimestamp', () => {
+  it.each([
+    [0, '0:00'],
+    [5, '0:05'],
+    [83, '1:23'],
+    [83.9, '1:23'],
+    [600, '10:00'],
+    [3599, '59:59'],
+    [3600, '1:00:00'],
+    [3723, '1:02:03'],
+    [-4, '0:00'],
+  ])('shows %d seconds as %s', (seconds, text) => {
+    expect(formatTimestamp(seconds)).toBe(text);
   });
 });
 

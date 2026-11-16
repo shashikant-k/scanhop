@@ -165,3 +165,14 @@ export function buildYouTubeUrl(link: YouTubeLink, options: BuildOptions = {}): 
   if (Number.isFinite(start) && start > 0) params.set('t', `${start}s`);
   return `${origin}/watch?${params.toString()}`;
 }
+
+/** Format seconds for display: `83` becomes `1:23`, `3723` becomes `1:02:03`. */
+export function formatTimestamp(totalSeconds: number): string {
+  const whole = Math.max(0, Math.floor(totalSeconds));
+  const hours = Math.floor(whole / 3600);
+  const minutes = Math.floor((whole % 3600) / 60);
+  const seconds = String(whole % 60).padStart(2, '0');
+  return hours > 0
+    ? `${hours}:${String(minutes).padStart(2, '0')}:${seconds}`
+    : `${minutes}:${seconds}`;
+}

@@ -74,3 +74,16 @@
   max-width: 256px;
   text-align: center;
 }
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.option input {
+  margin: 0;
+  accent-color: var(--accent);
+}

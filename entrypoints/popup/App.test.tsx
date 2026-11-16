@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 import { decodeQrSvg } from '@/test/decodeQrSvg';
 import { App } from './App';
@@ -13,6 +14,13 @@ function openOnTab(url: string | undefined) {
   ] as never);
 }
 
+/** Pretend the tab's video is `seconds` into playback (null: no video found). */
+function videoIsAt(seconds: number | null) {
+  return vi
+    .spyOn(fakeBrowser.scripting, 'executeScript')
+    .mockResolvedValue([{ result: seconds }] as never);
+}
+
 /** What a phone would read from the QR code currently on screen. */
 async function scannedText(): Promise<string | null> {
   const svg = await screen.findByRole('img', { name: /QR code for/ });
@@ -21,6 +29,7 @@ async function scannedText(): Promise<string | null> {
 
 beforeEach(() => {
   fakeBrowser.reset();
+  videoIsAt(null);
 });
 
 afterEach(cleanup);
@@ -94,5 +103,75 @@ describe('popup', () => {
     render(<App />);
 
     expect((await screen.findByRole('alert')).textContent).toMatch(/could not read this tab/);
+  });
+});
+
+describe('popup on a YouTube video that is playing', () => {
+  const VIDEO = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+
+  it('starts the phone at the current playback time by default', async () => {
+    openOnTab(VIDEO);
+    const executeScript = videoIsAt(83.4);
+    render(<App />);
+
+    expect(await scannedText()).toBe(`${VIDEO}&t=83s`);
+    expect(screen.getByRole('checkbox', { name: 'Start at 1:23' })).toHaveProperty('checked', true);
+    expect(executeScript).toHaveBeenCalledWith(expect.objectContaining({ target: { tabId: 1 } }));
+  });
+
+  it('drops the start time when the option is unticked, and restores it when ticked', async () => {
+    openOnTab(VIDEO);
+    videoIsAt(83.4);
+    render(<App />);
+    const option = await screen.findByRole('checkbox', { name: 'Start at 1:23' });
+
+    await userEvent.click(option);
+    expect(await scannedText()).toBe(VIDEO);
+
+    await userEvent.click(option);
+    expect(await scannedText()).toBe(`${VIDEO}&t=83s`);
+  });
+
+  it('replaces a start time that was already in the URL', async () => {
+    openOnTab(`${VIDEO}&t=10s`);
+    videoIsAt(200);
+    render(<App />);
+
+    expect(await scannedText()).toBe(`${VIDEO}&t=200s`);
+  });
+
+  it.each([
+    ['the video has not started', 0],
+    ['no video element is found', null],
+  ])('offers no option when %s', async (_case, seconds) => {
+    openOnTab(VIDEO);
+    videoIsAt(seconds);
+    render(<App />);
+
+    expect(await scannedText()).toBe(VIDEO);
+    expect(screen.queryByRole('checkbox')).toBeNull();
+  });
+
+  it('still shows the QR code when the page cannot be scripted', async () => {
+    openOnTab(VIDEO);
+    vi.spyOn(fakeBrowser.scripting, 'executeScript').mockRejectedValue(new Error('blocked'));
+    render(<App />);
+
+    expect(await scannedText()).toBe(VIDEO);
+    expect(screen.queryByRole('checkbox')).toBeNull();
+  });
+
+  it.each([
+    'https://example.com/video-page',
+    'https://www.youtube.com/shorts/dQw4w9WgXcQ',
+    'https://www.youtube.com/playlist?list=PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf',
+  ])('does not script the page for %s', async (url) => {
+    openOnTab(url);
+    const executeScript = videoIsAt(50);
+    render(<App />);
+    await scannedText();
+
+    expect(executeScript).not.toHaveBeenCalled();
+    expect(screen.queryByRole('checkbox')).toBeNull();
   });
 });

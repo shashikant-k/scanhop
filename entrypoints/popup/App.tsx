@@ -1,11 +1,27 @@
 import { useEffect, useState } from 'react';
-import { getActiveTab, type ActiveTab } from '@/src/browser/activeTab';
+import { getActiveTab, readVideoTime, type ActiveTab } from '@/src/browser/activeTab';
 import { resolveTarget, type ShareTarget } from '@/src/core/target';
+import { formatTimestamp, parseYouTube } from '@/src/core/youtube';
 import { QrCard } from './QrCard';
 import styles from './App.module.css';
 
 type TabState =
-  { status: 'loading' } | { status: 'ready'; tab: ActiveTab | null } | { status: 'failed' };
+  | { status: 'loading' }
+  | {
+      status: 'ready';
+      tab: ActiveTab | null;
+      /** Playback position of a YouTube video in the tab, when there is one. */
+      videoSeconds: number | null;
+    }
+  | { status: 'failed' };
+
+/** Read the tab and, for a YouTube video, where playback currently is. */
+async function loadTab(): Promise<Extract<TabState, { status: 'ready' }>> {
+  const tab = await getActiveTab();
+  const isVideo = tab?.url ? parseYouTube(tab.url)?.kind === 'video' : false;
+  const videoSeconds = isVideo && tab?.id != null ? await readVideoTime(tab.id) : null;
+  return { status: 'ready', tab, videoSeconds };
+}
 
 function heading(target: Exclude<ShareTarget, { kind: 'unsupported' }>): string {
   if (target.kind === 'web') return 'Scan to open on your phone';
@@ -18,8 +34,8 @@ export function App() {
 
   useEffect(() => {
     let cancelled = false;
-    getActiveTab().then(
-      (tab) => !cancelled && setState({ status: 'ready', tab }),
+    loadTab().then(
+      (ready) => !cancelled && setState(ready),
       () => !cancelled && setState({ status: 'failed' }),
     );
     return () => {
@@ -47,7 +63,22 @@ function Content({ state }: { state: TabState }) {
     );
   }
 
-  const target = resolveTarget(state.tab?.url);
+  return <Share url={state.tab?.url} videoSeconds={state.videoSeconds} />;
+}
+
+interface ShareProps {
+  url: string | undefined;
+  videoSeconds: number | null;
+}
+
+function Share({ url, videoSeconds }: ShareProps) {
+  // Only offer the option when the video has actually been played a little.
+  const canStartAtTime = videoSeconds != null && videoSeconds >= 1;
+  const [startAtTime, setStartAtTime] = useState(true);
+
+  const target = resolveTarget(url, {
+    startSeconds: canStartAtTime && startAtTime ? videoSeconds : undefined,
+  });
 
   if (target.kind === 'unsupported') {
     return (
@@ -61,6 +92,16 @@ function Content({ state }: { state: TabState }) {
     <>
       <h1 className={styles.heading}>{heading(target)}</h1>
       <QrCard url={target.url} />
+      {canStartAtTime && (
+        <label className={styles.option}>
+          <input
+            type="checkbox"
+            checked={startAtTime}
+            onChange={(event) => setStartAtTime(event.target.checked)}
+          />
+          Start at {formatTimestamp(videoSeconds)}
+        </label>
+      )}
       <p className={styles.url} title={target.url}>
         {target.url}
       </p>
