@@ -19,6 +19,7 @@
     "test:watch": "vitest",
     "e2e": "wxt build --mode e2e && playwright test",
     "lint": "eslint .",
+    "lint:firefox": "web-ext lint --source-dir .output/firefox-mv3",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "postinstall": "wxt prepare"
@@ -51,6 +52,7 @@
     "typescript": "~6.0",
     "typescript-eslint": "^8.72.2",
     "vitest": "^5.1.0",
+    "web-ext": "^10.8.0",
     "wxt": "^0.21.5"
   }
 }
