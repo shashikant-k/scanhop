@@ -3,6 +3,7 @@ import { getActiveTab, readVideoTime, type ActiveTab } from '@/src/browser/activ
 import { resolveTarget, type ShareTarget } from '@/src/core/target';
 import { formatTimestamp, parseYouTube } from '@/src/core/youtube';
 import { QrCard } from './QrCard';
+import { UNSUPPORTED, WARNINGS } from './messages';
 import styles from './App.module.css';
 
 type TabState =
@@ -81,10 +82,12 @@ function Share({ url, videoSeconds }: ShareProps) {
   });
 
   if (target.kind === 'unsupported') {
+    const { title, detail } = UNSUPPORTED[target.reason];
     return (
-      <p className={styles.message} role="alert">
-        This page can’t be opened on a phone.
-      </p>
+      <div className={styles.message} role="alert">
+        <h1 className={styles.heading}>{title}</h1>
+        <p>{detail}</p>
+      </div>
     );
   }
 
@@ -105,6 +108,11 @@ function Share({ url, videoSeconds }: ShareProps) {
       <p className={styles.url} title={target.url}>
         {target.url}
       </p>
+      {target.warnings.map((warning) => (
+        <p key={warning} className={styles.warning} role="status">
+          {WARNINGS[warning]}
+        </p>
+      ))}
     </>
   );
 }

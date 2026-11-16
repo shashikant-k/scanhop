@@ -82,14 +82,6 @@ describe('popup', () => {
     expect(await scannedText()).toBe(url);
   });
 
-  it('shows a message instead of a QR code for a browser page', async () => {
-    openOnTab('chrome://extensions/');
-    render(<App />);
-
-    expect((await screen.findByRole('alert')).textContent).toMatch(/can’t be opened on a phone/);
-    expect(screen.queryByRole('img')).toBeNull();
-  });
-
   it('shows a message when the URL is too long for any QR code', async () => {
     openOnTab('https://example.com/?q=' + 'x'.repeat(3000));
     render(<App />);
@@ -173,5 +165,49 @@ describe('popup on a YouTube video that is playing', () => {
 
     expect(executeScript).not.toHaveBeenCalled();
     expect(screen.queryByRole('checkbox')).toBeNull();
+  });
+});
+
+describe('popup on a page a phone cannot open', () => {
+  it.each([
+    [undefined, 'Nothing to share yet'],
+    ['chrome://extensions/', 'This is a browser page'],
+    ['about:blank', 'This is a browser page'],
+    ['file:///Users/me/notes.html', 'This is a file on your computer'],
+    ['data:text/html,hello', 'This page can’t be opened on a phone'],
+  ])('explains why for %j', async (url, title) => {
+    openOnTab(url);
+    render(<App />);
+
+    const alert = await screen.findByRole('alert');
+    expect(screen.getByRole('heading')).toHaveProperty('textContent', title);
+    expect(alert.textContent!.length).toBeGreaterThan(title.length);
+    expect(screen.queryByRole('img')).toBeNull();
+  });
+});
+
+describe('popup on an address the phone may not reach', () => {
+  it('warns that localhost only works on this computer, and still shows the QR code', async () => {
+    openOnTab('http://localhost:3000/dashboard');
+    render(<App />);
+
+    expect(await scannedText()).toBe('http://localhost:3000/dashboard');
+    expect(screen.getByRole('status').textContent).toMatch(/only works on this computer/);
+  });
+
+  it('warns that a private address needs the same network', async () => {
+    openOnTab('http://192.168.1.20:3000/');
+    render(<App />);
+
+    expect(await scannedText()).toBe('http://192.168.1.20:3000/');
+    expect(screen.getByRole('status').textContent).toMatch(/same network/);
+  });
+
+  it('shows no warning for a public website', async () => {
+    openOnTab('https://example.com/');
+    render(<App />);
+    await scannedText();
+
+    expect(screen.queryByRole('status')).toBeNull();
   });
 });

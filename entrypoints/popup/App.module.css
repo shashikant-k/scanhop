@@ -5,6 +5,9 @@
   --muted: #5f6368;
   --border: #dadce0;
   --accent: #1a56db;
+  --warning-bg: #fef7e0;
+  --warning-text: #5f4b00;
+  --warning-border: #f9d67a;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -14,6 +17,9 @@
     --muted: #9aa0a6;
     --border: #3c4043;
     --accent: #8ab4f8;
+    --warning-bg: #3a3320;
+    --warning-text: #fde293;
+    --warning-border: #6b5a1e;
   }
 }
 
@@ -86,4 +92,21 @@
 .option input {
   margin: 0;
   accent-color: var(--accent);
+}
+
+.message p {
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+
+.warning {
+  box-sizing: border-box;
+  margin: 0;
+  max-width: 256px;
+  padding: 8px 10px;
+  border: 1px solid var(--warning-border);
+  border-radius: 8px;
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  font-size: 12px;
 }
