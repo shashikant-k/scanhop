@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { getActiveTab, readVideoTime, type ActiveTab } from '@/src/browser/activeTab';
+import { readShareRequest } from '@/src/browser/contextMenu';
 import { planQr } from '@/src/core/qr';
 import { resolveTarget, type ShareTarget } from '@/src/core/target';
 import { formatTimestamp, parseYouTube } from '@/src/core/youtube';
@@ -18,9 +19,17 @@ type TabState =
     }
   | { status: 'failed' };
 
-/** Read the tab and, for a YouTube video, where playback currently is. */
-async function loadTab(): Promise<Extract<TabState, { status: 'ready' }>> {
-  const tab = await getActiveTab();
+/**
+ * Work out which page to share and, for a YouTube video, where playback is.
+ *
+ * Opened from the toolbar, that is the active tab. Opened from the right-click
+ * menu, the page address arrives in this page's own query string instead.
+ */
+async function loadTab(search: string): Promise<Extract<TabState, { status: 'ready' }>> {
+  const request = readShareRequest(search);
+  const tab: ActiveTab | null = request
+    ? { url: request.url, id: request.tabId }
+    : await getActiveTab();
   const isVideo = tab?.url ? parseYouTube(tab.url)?.kind === 'video' : false;
   const videoSeconds = isVideo && tab?.id != null ? await readVideoTime(tab.id) : null;
   return { status: 'ready', tab, videoSeconds };
@@ -32,19 +41,24 @@ function heading(target: Exclude<ShareTarget, { kind: 'unsupported' }>): string 
   return isMusic ? 'Scan to open in YouTube Music' : 'Scan to open in the YouTube app';
 }
 
-export function App() {
+interface AppProps {
+  /** Query string of the popup page. Overridable for tests. */
+  search?: string;
+}
+
+export function App({ search = window.location.search }: AppProps) {
   const [state, setState] = useState<TabState>({ status: 'loading' });
 
   useEffect(() => {
     let cancelled = false;
-    loadTab().then(
+    loadTab(search).then(
       (ready) => !cancelled && setState(ready),
       () => !cancelled && setState({ status: 'failed' }),
     );
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [search]);
 
   return (
     <main className={styles.app}>

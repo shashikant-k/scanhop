@@ -251,3 +251,29 @@ describe('popup actions', () => {
     expect(screen.queryByRole('button')).toBeNull();
   });
 });
+
+describe('popup opened from the right-click menu', () => {
+  it('shows the requested link without reading the active tab', async () => {
+    const query = vi.spyOn(fakeBrowser.tabs, 'query');
+    render(<App search="?url=https%3A%2F%2Fexample.com%2Flinked%3Fa%3D1" />);
+
+    expect(await scannedText()).toBe('https://example.com/linked?a=1');
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it('reads the playback time from the tab the menu was opened on', async () => {
+    const executeScript = videoIsAt(125);
+    render(<App search="?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DdQw4w9WgXcQ&tabId=9" />);
+
+    expect(await scannedText()).toBe('https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=125s');
+    expect(executeScript).toHaveBeenCalledWith(expect.objectContaining({ target: { tabId: 9 } }));
+  });
+
+  it('does not script any page for a YouTube link that has no tab', async () => {
+    const executeScript = videoIsAt(125);
+    render(<App search="?url=https%3A%2F%2Fyoutu.be%2FdQw4w9WgXcQ" />);
+
+    expect(await scannedText()).toBe('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+    expect(executeScript).not.toHaveBeenCalled();
+  });
+});
