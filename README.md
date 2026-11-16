@@ -5,10 +5,10 @@ ScanHop is a browser extension that shows a QR code for the page you are looking
 No account, no server: the QR code is made inside your browser and the page address never leaves your computer.
 
 <p align="center">
-  <img src="docs/popup-youtube.png" alt="ScanHop popup on a YouTube video: a QR code, a ticked 'Start at 1:23' option, the link, and Copy link / Save QR image buttons" width="300">
-  &nbsp;&nbsp;
-  <img src="docs/popup-localhost-dark.png" alt="ScanHop popup in dark mode on a localhost page, with a warning that the address only works on this computer" width="300">
+  <img src="docs/demo.gif" alt="Demo: clicking ScanHop on a web page shows a QR code; on a YouTube video the code links to the YouTube app at 1:23, with an option to start from the beginning; on a localhost page a warning appears" width="760">
 </p>
+
+<p align="center"><sub>The popups in this demo are the real extension. The browser window around them is drawn, because an automated browser cannot record its own toolbar. Regenerate it with <code>npm run demo</code>.</sub></p>
 
 ## Contents
 
@@ -124,6 +124,12 @@ Pin ScanHop to the toolbar so the button is always visible.
 
 Then open your phone's camera, point it at the code, and tap the link that appears.
 
+<p align="center">
+  <img src="docs/popup-youtube.png" alt="ScanHop popup on a YouTube video: a QR code, a ticked 'Start at 1:23' option, the link, and Copy link / Save QR image buttons" width="300">
+  &nbsp;&nbsp;
+  <img src="docs/popup-localhost-dark.png" alt="ScanHop popup in dark mode on a localhost page, with a warning that the address only works on this computer" width="300">
+</p>
+
 The shortcut can be changed at `chrome://extensions/shortcuts`, or in Firefox under **Add-ons → ⚙ → Manage Extension Shortcuts**.
 
 ## How YouTube links are handled
@@ -195,7 +201,10 @@ scanhop/
 │       └── contextMenu.ts     Menu entries and the "show this link" request
 ├── test/                      Shared test helpers (read a QR code back with ZXing)
 ├── e2e/                       Playwright tests against the real built extension
-├── scripts/make-icons.mjs     Draws the toolbar icons (npm run icons)
+├── scripts/
+│   ├── make-icons.mjs         Draws the toolbar icons (npm run icons)
+│   └── make-demo.mjs          Records docs/demo.gif (npm run demo)
+├── docs/                      Images used in this README
 ├── public/icon/               Generated icons
 └── wxt.config.ts              Extension name, permissions, shortcut
 ```
@@ -332,6 +341,7 @@ Before submitting to a store:
 | `npm run format`        | Format all files with Prettier                      |
 | `npm run format:check`  | Fail if any file is not formatted                   |
 | `npm run icons`         | Redraw the toolbar icons                            |
+| `npm run demo`          | Re-record the demo GIF in this README               |
 
 ## Troubleshooting
 

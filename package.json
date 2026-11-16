@@ -23,6 +23,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "icons": "node scripts/make-icons.mjs",
+    "demo": "wxt build --mode e2e && node scripts/make-demo.mjs",
     "postinstall": "wxt prepare"
   },
   "dependencies": {
@@ -46,6 +47,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.1.1",
     "fast-check": "^4.10.2",
+    "gifenc": "^1.0.3",
     "globals": "^17.14.0",
     "happy-dom": "^21.0.4",
     "pngjs": "^7.0.0",
