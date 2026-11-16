@@ -125,7 +125,7 @@ function Share({ url, videoSeconds }: ShareProps) {
   return (
     <>
       <h1 className={styles.heading}>{heading(target)}</h1>
-      <QrCard ref={qrRef} url={target.url} level={plan.level} dense={plan.dense} />
+      <QrCard ref={qrRef} url={target.url} level={plan.level} modules={plan.modules} />
       {canStartAtTime && (
         <label className={styles.option}>
           <input

@@ -56,12 +56,14 @@ test('a localhost address shows a warning under the QR code', async ({ openPopup
   expect(await scanPopup(popup)).toBe('http://localhost:3000/');
 });
 
-test('a long address still scans', async ({ openPopup }) => {
-  const url = `https://example.com/?q=${'x'.repeat(1200)}`;
-  const popup = await openPopup(request(url));
+for (const length of [400, 1050, 1223, 2900]) {
+  test(`a ${length}-character address still scans`, async ({ openPopup }) => {
+    const url = `https://example.com/?q=${'x'.repeat(length - 23)}`;
+    const popup = await openPopup(request(url));
 
-  expect(await scanPopup(popup)).toBe(url);
-});
+    expect(await scanPopup(popup)).toBe(url);
+  });
+}
 
 test.describe('in dark mode', () => {
   test.use({ colorScheme: 'dark' });

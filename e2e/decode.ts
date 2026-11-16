@@ -1,12 +1,17 @@
 /** Read QR codes out of PNG images, the way a phone camera would. */
-import jsQR from 'jsqr';
 import { PNG } from 'pngjs';
 import type { Page } from '@playwright/test';
+import { readQr } from '../test/readQr';
 
 /** Text carried by the QR code in a PNG image, or null if none is readable. */
 export function decodePng(png: Buffer): string | null {
   const { data, width, height } = PNG.sync.read(png);
-  return jsQR(new Uint8ClampedArray(data), width, height)?.data ?? null;
+  // Reduce red, green, blue, alpha to one brightness value per pixel.
+  const luminance = new Uint8ClampedArray(width * height);
+  for (let i = 0; i < luminance.length; i++) {
+    luminance[i] = (data[i * 4]! + data[i * 4 + 1]! + data[i * 4 + 2]!) / 3;
+  }
+  return readQr(luminance, width, height);
 }
 
 /** Text carried by the QR code currently shown in the popup. */
