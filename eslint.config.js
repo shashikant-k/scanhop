@@ -10,17 +10,20 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   {
     files: ['**/*.{ts,tsx}'],
+    rules: { '@typescript-eslint/consistent-type-imports': 'error' },
+  },
+  {
+    // Extension code: runs in the browser and uses React.
+    files: ['entrypoints/**/*.{ts,tsx}', 'src/**/*.{ts,tsx}'],
     languageOptions: {
       globals: { ...globals.browser, ...globals.webextensions },
     },
     plugins: { 'react-hooks': reactHooks },
-    rules: {
-      ...reactHooks.configs.recommended.rules,
-      '@typescript-eslint/consistent-type-imports': 'error',
-    },
+    rules: reactHooks.configs.recommended.rules,
   },
   {
-    files: ['*.config.{js,ts}'],
+    // Tooling and end-to-end tests: run in Node.
+    files: ['*.config.{js,ts}', 'e2e/**/*.ts'],
     languageOptions: { globals: globals.node },
   },
   prettier,
