@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getActiveTab, readVideoTime, type ActiveTab } from '@/src/browser/activeTab';
+import { planQr } from '@/src/core/qr';
 import { resolveTarget, type ShareTarget } from '@/src/core/target';
 import { formatTimestamp, parseYouTube } from '@/src/core/youtube';
+import { Actions } from './Actions';
 import { QrCard } from './QrCard';
 import { UNSUPPORTED, WARNINGS } from './messages';
 import styles from './App.module.css';
@@ -76,6 +78,7 @@ function Share({ url, videoSeconds }: ShareProps) {
   // Only offer the option when the video has actually been played a little.
   const canStartAtTime = videoSeconds != null && videoSeconds >= 1;
   const [startAtTime, setStartAtTime] = useState(true);
+  const qrRef = useRef<SVGSVGElement>(null);
 
   const target = resolveTarget(url, {
     startSeconds: canStartAtTime && startAtTime ? videoSeconds : undefined,
@@ -91,10 +94,24 @@ function Share({ url, videoSeconds }: ShareProps) {
     );
   }
 
+  const plan = planQr(target.url);
+
+  if (!plan.ok) {
+    return (
+      <div className={styles.message} role="alert">
+        <h1 className={styles.heading}>This address is too long for a QR code</h1>
+        <p>
+          It is {plan.bytes.toLocaleString()} bytes; a QR code holds at most{' '}
+          {plan.maxBytes.toLocaleString()}.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
       <h1 className={styles.heading}>{heading(target)}</h1>
-      <QrCard url={target.url} />
+      <QrCard ref={qrRef} url={target.url} level={plan.level} dense={plan.dense} />
       {canStartAtTime && (
         <label className={styles.option}>
           <input
@@ -108,6 +125,7 @@ function Share({ url, videoSeconds }: ShareProps) {
       <p className={styles.url} title={target.url}>
         {target.url}
       </p>
+      <Actions url={target.url} qrRef={qrRef} />
       {target.warnings.map((warning) => (
         <p key={warning} className={styles.warning} role="status">
           {WARNINGS[warning]}

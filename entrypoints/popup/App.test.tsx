@@ -86,7 +86,7 @@ describe('popup', () => {
     openOnTab('https://example.com/?q=' + 'x'.repeat(3000));
     render(<App />);
 
-    expect((await screen.findByRole('alert')).textContent).toMatch(/too long to fit in a QR code/);
+    expect((await screen.findByRole('alert')).textContent).toMatch(/too long for a QR code/);
     expect(screen.queryByRole('img')).toBeNull();
   });
 
@@ -209,5 +209,45 @@ describe('popup on an address the phone may not reach', () => {
     await scannedText();
 
     expect(screen.queryByRole('status')).toBeNull();
+  });
+});
+
+describe('popup actions', () => {
+  it('copies the QR link, not the original tab URL', async () => {
+    openOnTab('https://youtu.be/dQw4w9WgXcQ?si=tracking');
+    const user = userEvent.setup();
+    const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
+    render(<App />);
+
+    await user.click(await screen.findByRole('button', { name: 'Copy link' }));
+
+    expect(writeText).toHaveBeenCalledWith('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+    expect(await screen.findByText('Link copied')).toBeTruthy();
+  });
+
+  it('says so when copying is blocked', async () => {
+    openOnTab('https://example.com/');
+    const user = userEvent.setup();
+    vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('denied'));
+    render(<App />);
+
+    await user.click(await screen.findByRole('button', { name: 'Copy link' }));
+
+    expect(await screen.findByText('Could not copy the link')).toBeTruthy();
+  });
+
+  it('offers to save the QR code as an image', async () => {
+    openOnTab('https://example.com/');
+    render(<App />);
+
+    expect(await screen.findByRole('button', { name: 'Save QR image' })).toBeTruthy();
+  });
+
+  it('offers no actions when there is no QR code', async () => {
+    openOnTab('chrome://extensions/');
+    render(<App />);
+    await screen.findByRole('alert');
+
+    expect(screen.queryByRole('button')).toBeNull();
   });
 });

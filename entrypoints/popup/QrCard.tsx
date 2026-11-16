@@ -1,5 +1,6 @@
+import type { Ref } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { planQr } from '@/src/core/qr';
+import type { ErrorCorrectionLevel } from '@/src/core/qr';
 import styles from './App.module.css';
 
 /** On-screen size of the QR code in CSS pixels. Dense codes get more room. */
@@ -11,27 +12,22 @@ const QUIET_ZONE = 4;
 interface QrCardProps {
   /** The exact text the QR code carries. */
   url: string;
+  level: ErrorCorrectionLevel;
+  /** Draw the code larger because it has many small squares. */
+  dense: boolean;
+  /** Gives access to the drawn SVG, used to save it as an image. */
+  ref?: Ref<SVGSVGElement>;
 }
 
-export function QrCard({ url }: QrCardProps) {
-  const plan = planQr(url);
-
-  if (!plan.ok) {
-    return (
-      <p className={styles.message} role="alert">
-        This address is too long to fit in a QR code ({plan.bytes.toLocaleString()} bytes; the limit
-        is {plan.maxBytes.toLocaleString()}).
-      </p>
-    );
-  }
-
+export function QrCard({ url, level, dense, ref }: QrCardProps) {
   return (
     // Always black on white, whatever the theme: inverted codes scan poorly.
     <div className={styles.qr}>
       <QRCodeSVG
+        ref={ref}
         value={url}
-        level={plan.level}
-        size={plan.dense ? SIZE.dense : SIZE.normal}
+        level={level}
+        size={dense ? SIZE.dense : SIZE.normal}
         marginSize={QUIET_ZONE}
         bgColor="#ffffff"
         fgColor="#000000"
